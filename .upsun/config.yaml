@@ -11,7 +11,7 @@ applications:
 
         echo "==> Installing dependencies..."
         cd .librechat
-        npm ci --legacy-peer-deps
+        NODE_ENV=development npm ci --legacy-peer-deps
 
         echo "==> Building frontend..."
         npm run build
