@@ -5,22 +5,18 @@ applications:
       packages:
         # LibreChat app (provides librechat-server binary), added in NixOS 25.05
         - librechat
-        # MongoDB Community Edition daemon (mongod + mongos)
-        - package: mongodb-ce
-          channel: unstable
-        # MongoDB shell — used in start.sh to wait for mongod readiness
-        - package: mongosh
-          channel: unstable
 
     mounts:
-      # MongoDB data files and logs
-      "/mongodb":
-        source: local
-        source_path: mongodb
       # LibreChat writable data: logs, uploads, generated images
       "/librechat":
         source: local
         source_path: librechat
+
+    relationships:
+      # Exposes MONGODB_SCHEME, MONGODB_HOST, MONGODB_PORT,
+      # MONGODB_USERNAME, MONGODB_PASSWORD, MONGODB_PATH
+      # — assembled into MONGO_URI in start.sh
+      mongodb: "database:mongodb"
 
     web:
       commands:
@@ -34,12 +30,8 @@ applications:
 
     variables:
       env:
-        # MongoDB runs in the same container, so localhost is correct
-        MONGO_URI: "mongodb://127.0.0.1:27017/librechat"
-        # LibreChat config file committed to the repo root
+        # MONGO_URI is constructed at runtime in start.sh from relationship env vars
         CONFIG_PATH: "/app/librechat.yaml"
-        # Logs go to the writable mount; uploads/images are relative to CWD
-        # (set to /app/librechat in start.sh)
         LIBRECHAT_LOG_DIR: "/app/librechat/logs"
         HOST: "0.0.0.0"
         NODE_ENV: "production"
@@ -52,3 +44,7 @@ applications:
       #   upsun variable:create --sensitive=true --name=env:CREDS_IV     --value=$(openssl rand -hex 16)
       #   upsun variable:create --sensitive=true --name=env:JWT_SECRET   --value=$(openssl rand -hex 32)
       #   upsun variable:create --sensitive=true --name=env:JWT_REFRESH_SECRET --value=$(openssl rand -hex 32)
+
+services:
+  database:
+    type: mongodb-enterprise:7.0
