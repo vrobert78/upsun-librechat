@@ -11,10 +11,10 @@ applications:
 
         echo "==> Installing dependencies..."
         cd .librechat
-        NODE_ENV=development npm ci --legacy-peer-deps
+        NODE_ENV=development npm ci
 
         echo "==> Building frontend..."
-        npm run build
+        npm run frontend
 
         echo "==> LibreChat build done."
 
