@@ -1,6 +1,6 @@
 applications:
   librechat:
-    type: "nodejs:22"
+    type: "nodejs:20"
 
     hooks:
       build: |
