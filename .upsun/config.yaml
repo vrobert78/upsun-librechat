@@ -14,11 +14,11 @@ applications:
 
     mounts:
       # MongoDB data files and logs
-      "/app/mongodb":
+      "/mongodb":
         source: local
         source_path: mongodb
       # LibreChat writable data: logs, uploads, generated images
-      "/app/librechat":
+      "/librechat":
         source: local
         source_path: librechat
 
