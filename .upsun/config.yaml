@@ -58,7 +58,7 @@ applications:
         pip install torch --index-url https://download.pytorch.org/whl/cpu --quiet
 
         echo "==> Installing rag_api dependencies + sentence-transformers..."
-        pip install sentence-transformers -r .rag_api/requirements.lite.txt --quiet
+        pip install sentence-transformers langchain-huggingface -r .rag_api/requirements.lite.txt --quiet
 
         echo "==> RAG API build done."
 
