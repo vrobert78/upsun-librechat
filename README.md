@@ -8,7 +8,7 @@ Deploy [LibreChat](https://www.librechat.ai/) on [Upsun](https://upsun.com/) wit
 
 | Component | Type | Role |
 |-----------|------|------|
-| `librechat` | `composable:25.11` (Nix) | LibreChat web app (v0.8.5 from nixpkgs unstable) |
+| `librechat` | `nodejs:20` | LibreChat web app (v0.8.5, cloned and built at deploy time) |
 | `rag-api` | `python:3.12` | [rag_api](https://github.com/danny-avila/rag_api) v0.5.0 — embedding + vector search |
 | `database` | `mongodb-enterprise:7.0` | LibreChat data (users, conversations, files) |
 | `pgdb` | `postgresql:16` + pgvector | Vector store for document embeddings |
@@ -132,14 +132,19 @@ upsun redeploy
 
 | Mount | App | Purpose |
 |-------|-----|---------|
-| `/app/librechat` | librechat | Logs, uploads, images |
+| `/app/librechat` | librechat | Logs |
+| `/app/.librechat/uploads` | librechat | User file uploads (path hardcoded in LibreChat) |
+| `/app/.librechat/client/public/images` | librechat | Generated images (path hardcoded in LibreChat) |
 | `/app/uploads` | rag-api | Raw uploaded files |
 | `/app/hf-cache` | rag-api | HuggingFace model cache (persists across deploys) |
 
 ## Notes
 
-- **MongoDB**: The managed `mongodb-enterprise:7.0` service is required. Running MongoDB via a Nix package is not currently viable on Upsun:
-  - **MongoDB 7.x** is not in the Nix binary cache, so it must be compiled from source. Compilation fails due to a Nix store path remapping issue in the Upsun build environment (`impure path` linker error).
-  - **MongoDB 8** is in the binary cache and installs fine, but fails to start at runtime because of a [`numpossiblecpusnocache` CPU topology check](https://www.mongodb.com/community/forums/t/disable-numpossiblecpusnocache-check/301832) introduced in MongoDB 8 that does not work correctly in containerized environments.
+- **Build time**: The `librechat` build hook clones LibreChat v0.8.5 and runs `npm run frontend` (installs ~1800 packages, compiles all workspace packages and the Vite frontend). Expect 3–5 minutes on first deploy; Upsun caches the build artifact so subsequent deploys with no code changes are instant.
+- **Node.js version**: LibreChat must run on Node.js 20. On Node.js 22 the `module-alias` package fails to resolve workspace-local `node_modules` due to CJS loader changes introduced in that version.
+- **MongoDB**: The managed `mongodb-enterprise:7.0` service is required. Running MongoDB from a Node.js or Nix package is not currently viable on Upsun:
+  - **MongoDB 7.x** (Nix): not in the Nix binary cache — source compilation fails due to a store path remapping issue in the Upsun build environment (`impure path` linker error).
+  - **MongoDB 8** (Nix): in the binary cache and installs fine, but fails to start at runtime due to a [`numpossiblecpusnocache` CPU topology check](https://www.mongodb.com/community/forums/t/disable-numpossiblecpusnocache-check/301832) that does not work correctly in containerised environments.
 - **First deploy**: The `rag-api` build hook clones `rag_api` and installs Python dependencies including a CPU-only PyTorch build. This takes a few minutes.
 - **HuggingFace model**: On the first request after deploy, the embedding model (`all-MiniLM-L6-v2` by default) is downloaded into the `/app/hf-cache` mount. Subsequent deploys reuse the cache.
+- **Composable image alternative**: An earlier version of this setup used the Upsun composable image (`composable:25.11`) with LibreChat packaged via Nix. That approach is preserved on the [`composable-image`](../../tree/composable-image) branch.
