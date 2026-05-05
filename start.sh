@@ -5,6 +5,12 @@ set -euo pipefail
 mkdir -p /app/mongodb/data /app/mongodb/logs
 mkdir -p /app/librechat/logs /app/librechat/uploads /app/librechat/images
 
+# Disable tcmalloc's per-CPU (VCPU) mode so it doesn't try to read
+# /sys/devices/system/cpu/possible, which is inaccessible in Upsun containers.
+# Must be set before mongod starts; the crash happens in static C++ init,
+# before command-line flags are processed.
+export TCMALLOC_PERCPU_VCPU_ENABLE=0
+
 # Start MongoDB in the background.
 # --bind_ip 127.0.0.1  : listen on loopback only — no external exposure
 # --wiredTigerCacheSizeGB 0.25 : cap RAM usage for a small container
