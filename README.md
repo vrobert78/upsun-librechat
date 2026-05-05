@@ -4,6 +4,8 @@ Deploy [LibreChat](https://www.librechat.ai/) on [Upsun](https://upsun.com/) wit
 
 ## Architecture
 
+![Apps & Services on Upsun](docs/apps-services.png)
+
 | Component | Type | Role |
 |-----------|------|------|
 | `librechat` | `composable:25.11` (Nix) | LibreChat web app (v0.8.5 from nixpkgs unstable) |
