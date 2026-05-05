@@ -1,0 +1,55 @@
+applications:
+  librechat:
+    type: "composable:latest"
+    stack:
+      packages:
+        # LibreChat app (provides librechat-server binary), nixpkgs unstable only for now
+        - package: librechat
+          channel: unstable
+        # MongoDB Community Edition daemon (mongod + mongos)
+        - package: mongodb-ce
+          channel: unstable
+        # MongoDB shell — used in start.sh to wait for mongod readiness
+        - package: mongosh
+          channel: unstable
+
+    mounts:
+      # MongoDB data files and logs
+      "/app/mongodb":
+        source: local
+        source_path: mongodb
+      # LibreChat writable data: logs, uploads, generated images
+      "/app/librechat":
+        source: local
+        source_path: librechat
+
+    web:
+      commands:
+        start: "bash start.sh"
+      upstream:
+        socket_family: tcp
+        protocol: http
+      locations:
+        "/":
+          passthru: true
+
+    variables:
+      env:
+        # MongoDB runs in the same container, so localhost is correct
+        MONGO_URI: "mongodb://127.0.0.1:27017/librechat"
+        # LibreChat config file committed to the repo root
+        CONFIG_PATH: "/app/librechat.yaml"
+        # Logs go to the writable mount; uploads/images are relative to CWD
+        # (set to /app/librechat in start.sh)
+        LIBRECHAT_LOG_DIR: "/app/librechat/logs"
+        HOST: "0.0.0.0"
+        NODE_ENV: "production"
+        # Add AI provider keys here, e.g.:
+        #   OPENAI_API_KEY: "sk-..."
+        #   ANTHROPIC_API_KEY: "sk-ant-..."
+
+      # Secrets — do NOT put values here. Set them with:
+      #   upsun variable:create --sensitive=true --name=env:CREDS_KEY    --value=$(openssl rand -hex 32)
+      #   upsun variable:create --sensitive=true --name=env:CREDS_IV     --value=$(openssl rand -hex 16)
+      #   upsun variable:create --sensitive=true --name=env:JWT_SECRET   --value=$(openssl rand -hex 32)
+      #   upsun variable:create --sensitive=true --name=env:JWT_REFRESH_SECRET --value=$(openssl rand -hex 32)

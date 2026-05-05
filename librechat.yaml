@@ -1,0 +1,16 @@
+version: "1.2.1"
+cache: true
+
+# Uncomment and configure to add AI endpoints.
+# API keys can also be set as env vars (e.g. OPENAI_API_KEY, ANTHROPIC_API_KEY)
+# and LibreChat will pick them up automatically without explicit endpoint config.
+#
+# endpoints:
+#   custom:
+#     - name: "Anthropic"
+#       apiKey: "${ANTHROPIC_API_KEY}"
+#       baseURL: "https://api.anthropic.com/v1"
+#       models:
+#         default: ["claude-sonnet-4-6"]
+#         fetch: false
+#       modelDisplayLabel: "Anthropic"
