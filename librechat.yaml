@@ -1,3 +1,6 @@
 version: "1.3.0"
 cache: true
 
+endpoints:
+  google:
+    disabled: true
