@@ -3,6 +3,12 @@ set -euo pipefail
 
 mkdir -p /app/librechat/logs /app/librechat/uploads /app/librechat/images
 
+# Provide a dummy Google service key so LibreChat doesn't fall back to the
+# hardcoded api/data/auth.json path inside the read-only Nix store.
+# Without this, every request logs "Failed to load service key from file".
+echo '{}' > /app/librechat/auth.json
+export GOOGLE_SERVICE_KEY_FILE=/app/librechat/auth.json
+
 # Build MONGO_URI from relationship env vars injected by Upsun
 export MONGO_URI="${MONGODB_SCHEME}://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@${MONGODB_HOST}:${MONGODB_PORT}/${MONGODB_PATH}"
 
