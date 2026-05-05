@@ -38,6 +38,7 @@ applications:
         HOST: "0.0.0.0"
         NODE_ENV: "production"
         ALLOW_REGISTRATION: "true"
+        ALLOW_SOCIAL_LOGIN: "false"
         # Add AI provider keys here, e.g.:
         #   OPENAI_API_KEY: "sk-..."
         #   ANTHROPIC_API_KEY: "sk-ant-..."
