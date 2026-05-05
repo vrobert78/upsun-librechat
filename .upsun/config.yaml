@@ -1,12 +1,22 @@
 applications:
   librechat:
-    type: "composable:25.11"
-    stack:
-      packages:
-        # LibreChat 0.8.5 from unstable — 0.8.0 in 25.11 stable has an incomplete
-        # upload path patch that still writes images to the read-only Nix store
-        - package: librechat
-          channel: unstable
+    type: "nodejs:22"
+
+    hooks:
+      build: |
+        set -eu
+
+        echo "==> Cloning LibreChat v0.8.5..."
+        git clone --depth=1 --branch v0.8.5 https://github.com/danny-avila/LibreChat .librechat
+
+        echo "==> Installing dependencies..."
+        cd .librechat
+        npm ci --legacy-peer-deps
+
+        echo "==> Building frontend..."
+        npm run build
+
+        echo "==> LibreChat build done."
 
     mounts:
       "/librechat":
@@ -36,6 +46,9 @@ applications:
         NODE_ENV: "production"
         ALLOW_REGISTRATION: "true"
         ALLOW_SOCIAL_LOGIN: "false"
+        UPLOAD_PATH: "/app/librechat/uploads"
+        UPLOADS_PATH: "/app/librechat/uploads"
+        IMAGE_OUTPUT_PATH: "/app/librechat/images"
         # RAG_API_URL is built at runtime in start.sh from the rag_api relationship vars
 
       # Secrets — do NOT put values here. Set them with:
