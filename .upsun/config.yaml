@@ -1,11 +1,10 @@
 applications:
   librechat:
-    type: "composable:latest"
+    type: "composable:25.11"
     stack:
       packages:
-        # LibreChat app (provides librechat-server binary), nixpkgs unstable only for now
-        - package: librechat
-          channel: unstable
+        # LibreChat app (provides librechat-server binary), added in NixOS 25.05
+        - librechat
         # MongoDB Community Edition daemon (mongod + mongos)
         - package: mongodb-ce
           channel: unstable
