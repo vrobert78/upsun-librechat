@@ -9,16 +9,14 @@ applications:
           channel: unstable
 
     mounts:
-      # LibreChat writable data: logs, uploads, generated images
       "/librechat":
         source: local
         source_path: librechat
 
     relationships:
-      # Exposes MONGODB_SCHEME, MONGODB_HOST, MONGODB_PORT,
-      # MONGODB_USERNAME, MONGODB_PASSWORD, MONGODB_PATH
-      # — assembled into MONGO_URI in start.sh
       mongodb: "database:mongodb"
+      # App-to-app relationship: injects RAG_API_HOST, RAG_API_PORT, RAG_API_SCHEME
+      rag_api: "rag-api:http"
 
     web:
       commands:
@@ -32,16 +30,13 @@ applications:
 
     variables:
       env:
-        # MONGO_URI is constructed at runtime in start.sh from relationship env vars
         CONFIG_PATH: "/app/librechat.yaml"
         LIBRECHAT_LOG_DIR: "/app/librechat/logs"
         HOST: "0.0.0.0"
         NODE_ENV: "production"
         ALLOW_REGISTRATION: "true"
         ALLOW_SOCIAL_LOGIN: "false"
-        # Add AI provider keys here, e.g.:
-        #   OPENAI_API_KEY: "sk-..."
-        #   ANTHROPIC_API_KEY: "sk-ant-..."
+        # RAG_API_URL is built at runtime in start.sh from the rag_api relationship vars
 
       # Secrets — do NOT put values here. Set them with:
       #   upsun variable:create --sensitive=true --name=env:CREDS_KEY    --value=$(openssl rand -hex 32)
@@ -49,6 +44,70 @@ applications:
       #   upsun variable:create --sensitive=true --name=env:JWT_SECRET   --value=$(openssl rand -hex 32)
       #   upsun variable:create --sensitive=true --name=env:JWT_REFRESH_SECRET --value=$(openssl rand -hex 32)
 
+  rag-api:
+    type: "python:3.12"
+
+    hooks:
+      build: |
+        set -euo pipefail
+
+        echo "==> Cloning rag_api v0.5.0..."
+        git clone --depth=1 --branch v0.5.0 https://github.com/danny-avila/rag_api .rag_api
+
+        echo "==> Installing CPU-only torch (avoids the 2GB GPU wheel)..."
+        pip install torch --index-url https://download.pytorch.org/whl/cpu --quiet
+
+        echo "==> Installing rag_api dependencies + sentence-transformers..."
+        pip install sentence-transformers -r .rag_api/requirements.lite.txt --quiet
+
+        echo "==> RAG API build done."
+
+    mounts:
+      "/uploads":
+        source: local
+        source_path: rag-uploads
+      # HuggingFace model cache — persists across deploys so the model is
+      # only downloaded once rather than on every container start
+      "/hf-cache":
+        source: local
+        source_path: hf-cache
+
+    relationships:
+      postgres: "pgdb:postgresql"
+
+    web:
+      commands:
+        start: "bash rag_start.sh"
+      upstream:
+        socket_family: tcp
+        protocol: http
+      locations:
+        "/":
+          passthru: true
+
+    variables:
+      env:
+        VECTOR_DB_TYPE: "pgvector"
+        COLLECTION_NAME: "librechat"
+        RAG_UPLOAD_DIR: "/app/uploads"
+        HF_HOME: "/app/hf-cache"
+        # Embeddings: "huggingface" (local, no key) or "openai" (fast, needs OPENAI_API_KEY)
+        # Switch with: upsun variable:set env:EMBEDDINGS_PROVIDER openai
+        EMBEDDINGS_PROVIDER: "huggingface"
+
+routes:
+  "https://{default}/":
+    type: upstream
+    upstream: "librechat:http"
+  "http://{default}/":
+    type: redirect
+    to: "https://{default}/"
+
 services:
   database:
     type: mongodb-enterprise:7.0
+  pgdb:
+    type: postgresql:16
+    configuration:
+      extensions:
+        - vector   # pgvector
