@@ -22,6 +22,13 @@ applications:
       "/librechat":
         source: local
         source_path: librechat
+      # Shadow the hardcoded paths in api/config/paths.js with writable mounts
+      "/.librechat/uploads":
+        source: local
+        source_path: librechat-uploads
+      "/.librechat/client/public/images":
+        source: local
+        source_path: librechat-images
 
     relationships:
       mongodb: "database:mongodb"
@@ -46,9 +53,6 @@ applications:
         NODE_ENV: "production"
         ALLOW_REGISTRATION: "true"
         ALLOW_SOCIAL_LOGIN: "false"
-        UPLOAD_PATH: "/app/librechat/uploads"
-        UPLOADS_PATH: "/app/librechat/uploads"
-        IMAGE_OUTPUT_PATH: "/app/librechat/images"
         # RAG_API_URL is built at runtime in start.sh from the rag_api relationship vars
 
       # Secrets — do NOT put values here. Set them with:

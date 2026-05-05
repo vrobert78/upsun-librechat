@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-mkdir -p /app/librechat/logs /app/librechat/uploads /app/librechat/images
+mkdir -p /app/librechat/logs
 
 # Build MONGO_URI from relationship env vars injected by Upsun
 export MONGO_URI="${MONGODB_SCHEME}://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@${MONGODB_HOST}:${MONGODB_PORT}/${MONGODB_PATH}"
