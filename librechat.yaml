@@ -1,14 +1,3 @@
 version: "1.3.0"
 cache: true
 
-endpoints:
-  anthropic:
-    # Restrict to models compatible with LibreChat 0.8.x's thinking API format.
-    # claude-opus-4-7 requires thinking.type.adaptive (new format) which 0.8.x
-    # doesn't support — it would send thinking.type.enabled and get a 400 error.
-    models:
-      default:
-        - claude-opus-4-5-20251101
-        - claude-sonnet-4-6
-        - claude-haiku-4-5-20251001
-      fetch: false
