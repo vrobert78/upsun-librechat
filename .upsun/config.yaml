@@ -3,8 +3,10 @@ applications:
     type: "composable:25.11"
     stack:
       packages:
-        # LibreChat app (provides librechat-server binary), added in NixOS 25.05
-        - librechat
+        # LibreChat 0.8.5 from unstable — 0.8.0 in 25.11 stable has an incomplete
+        # upload path patch that still writes images to the read-only Nix store
+        - package: librechat
+          channel: unstable
 
     mounts:
       # LibreChat writable data: logs, uploads, generated images
